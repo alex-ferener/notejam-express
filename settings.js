@@ -1,17 +1,9 @@
-var settings = {
-  development: {
-    db: "notejam.db",
-    dsn: "sqlite://notejam.db"
-  },
-  test: {
-    db: "notejam_test.db",
-    dsn: "sqlite://notejam_test.db"
-  }
-};
+const dbHost = process.env.DB_HOST
+const dbUsername = process.env.DB_USERNAME
+const dbPassword = process.env.DB_PASSWORD
+const dbName = process.env.NODE_ENV === 'test' ? 'test' : process.env.DB_NAME;
 
-
-var env = process.env.NODE_ENV
-if (!env) {
-  env = 'development'
-};
-module.exports = settings[env];
+module.exports = {
+  partial_dsn: `mysql://${dbUsername}:${dbPassword}@${dbHost}`,
+  dsn: `mysql://${dbUsername}:${dbPassword}@${dbHost}/${dbName}`
+}

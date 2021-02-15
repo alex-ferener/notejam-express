@@ -1,104 +1,124 @@
-var sqlite3 = require('sqlite3').verbose();
-var async = require('async');
+const async = require('async');
+const orm = require('orm');
+const settings = require('./settings');
 
-var settings = require('./settings');
-var db = new sqlite3.Database(settings.db);
+if (require.main === module && process.argv.indexOf('--create-test-db') > -1) {
+  orm.connect(`${settings.partial_dsn}/`, function (err, db) {
+    db.driver.execQuery(`CREATE DATABASE IF NOT EXISTS test`, function (err, data) {
+      console.log("Test database was successfully created");
+    });
+  });
+}
 
-var functions = {
-  createTables: function(next) {
-    async.series({
-      createUsers: function(callback) {
-        db.run("CREATE TABLE IF NOT EXISTS users (" +
-            "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
-            "email VARCHAR(75) NOT NULL," +
-            "password VARCHAR(128) NOT NULL);", [],
-            function() { callback(null); });
-      },
-      createPads: function(callback) {
-        db.run("CREATE TABLE IF NOT EXISTS pads (" +
-            "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
-            "name VARCHAR(100) NOT NULL," +
-            "user_id INTEGER NOT NULL REFERENCES users(id));", [],
-            function() { callback(null); })
-      },
-      createNotes: function(callback) {
-        db.run("CREATE TABLE IF NOT EXISTS notes (" +
-            "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
-            "pad_id INTEGER REFERENCES pads(id)," +
-            "user_id INTEGER NOT NULL REFERENCES users(id)," +
-            "name VARCHAR(100) NOT NULL," +
-            "text text NOT NULL," +
-            "created_at default current_timestamp," +
-            "updated_at default current_timestamp);", [],
-            function() { callback(null); });
-      }
-    },
-    function(err, results) {
-      next();
+const db = orm.connect(settings.dsn);
+
+db.on('connect', function (err) {
+  if (err) return console.error('Connection error: ' + err);
+});
+
+const functions = {
+  createTables: function (next) {
+    db.load("./models", function (err) {
+      if (err) throw err;
+      // create tables
+      db.sync(function (err) {
+        if (err) throw err;
+        next();
+      });
     });
   },
 
-  applyFixtures: function(next) {
-    this.truncateTables(function() {
+  applyFixtures: function (next) {
+    this.truncateTables(function () {
       async.series([
-        function(callback) {
-          db.run("INSERT INTO users VALUES (1, 'user1@example.com', " +
-                 "'$2a$10$mhkqpUvPPs.zoRSTiGAEKODOJMljkOY96zludIIw.Pop1UvQCTx8u')", [],
-                function() { callback(null) });
+        function (callback) {
+          db.models.users.create({
+            id: 1,
+            email: "user1@example.com",
+            password: "$2a$10$mhkqpUvPPs.zoRSTiGAEKODOJMljkOY96zludIIw.Pop1UvQCTx8u"
+          }, function (err) {
+            callback(null)
+          });
         },
-        function(callback) {
-          db.run("INSERT INTO users VALUES (2, 'user2@example.com', " +
-                 "'$2a$10$mhkqpUvPPs.zoRSTiGAEKODOJMljkOY96zludIIw.Pop1UvQCTx8u')", [],
-                function() { callback(null) });
-
+        function (callback) {
+          db.models.users.create({
+            id: 2,
+            email: "user2@example.com",
+            password: "$2a$10$mhkqpUvPPs.zoRSTiGAEKODOJMljkOY96zludIIw.Pop1UvQCTx8u"
+          }, function (err) {
+            callback(null)
+          });
         },
-        function(callback) {
-          db.run("INSERT INTO pads VALUES (1, 'Pad 1', 1)", [],
-                function() { callback(null) });
+        function (callback) {
+          db.models.pads.create({
+            id: 1,
+            name: "Pad 1",
+            user_id: 1
+          }, function (err) {
+            callback(null)
+          });
         },
-        function(callback) {
-          db.run("INSERT INTO pads VALUES (2, 'Pad 2', 1)", [],
-                function() { callback(null) });
+        function (callback) {
+          db.models.pads.create({
+            id: 2,
+            name: "Pad 2",
+            user_id: 1
+          }, function (err) {
+            callback(null)
+          });
         },
-        function(callback) {
-          db.run("INSERT INTO notes VALUES (1, 1, 1, 'Note 1', 'Text', 1, 1)", [],
-                function() { callback(null) });
+        function (callback) {
+          db.models.notes.create({
+            id: 1,
+            name: "Note 1",
+            text: "Text",
+            user_id: 1,
+            pad_id: 1,
+          }, function (err) {
+            callback(null)
+          });
         },
-        function(callback) {
-          db.run("INSERT INTO notes VALUES (2, 1, 1, 'Note 2', 'Text', 1, 1)", [],
-                function() { callback(null) });
+        function (callback) {
+          db.models.notes.create({
+            id: 2,
+            name: "Note 2",
+            text: "Text",
+            user_id: 1,
+            pad_id: 1,
+          }, function (err) {
+            callback(null)
+          });
         }
-      ], function(err, results) {
+      ], function (err, results) {
         next();
       })
     });
   },
 
-  truncateTables: function(next) {
+  truncateTables: function (next) {
     async.series([
-      function(callback) {
-        db.run("DELETE FROM users;", [],
-              function() { callback(null) });
+      function (callback) {
+        db.models.users.clear();
+        callback(null);
       },
-      function(callback) {
-        db.run("DELETE FROM notes;", [],
-              function() { callback(null) });
-
+      function (callback) {
+        db.models.pads.clear();
+        callback(null);
       },
-      function(callback) {
-        db.run("DELETE FROM pads;", [],
-              function(result) { callback(null); });
+      function (callback) {
+        db.models.notes.clear();
+        callback(null);
       }
-    ], function(err, results) {
+    ], function (err, results) {
       next();
     })
   }
 }
 
-
 if (require.main === module) {
-  functions.createTables(function() {
-    console.log("DB successfully initialized");
+  functions.createTables(function () {
+    console.log("All tables were successfully synchronized with the models");
+    process.exit(0)
   });
 }
 

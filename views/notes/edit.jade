@@ -13,7 +13,8 @@ block content
     +error('text', errors)
     label(for='pad_id') Pad
     select(name='pad_id')
-      option ----------
+      //- prevent SQL error (expected int)
+      option(value=0) No Pad
       each pad in req.user.pads
         option(value=pad.id, selected=pad.id == note.pad_id) #{pad.name}
     input(type='submit', value='Save')

@@ -1,4 +1,6 @@
 /.idea
+/mysql-data
+/notejam_*.db
 
 # Logs
 logs

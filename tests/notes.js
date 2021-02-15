@@ -1,15 +1,9 @@
-// Enable test environment
-process.env.NODE_ENV = 'test';
-
 var request = require('superagent');
 var should = require('should');
 require('should-http');
 
 var db = require('../db');
-var config = require('./config')
-var app = require('../app');
-
-app.listen(config.port);
+var config = require('./config');
 
 before(function(done) {
   db.createTables(function() {

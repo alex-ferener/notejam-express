@@ -37,6 +37,14 @@ module.exports = function (db, cb) {
         return moment(this.updated_at).fromNow();
       }
     },
+    hooks: {
+      beforeValidation: function () {
+        if (!this.created_at) {
+          this.created_at = new Date();
+        }
+        this.updated_at = new Date();
+      }
+    },
     validations: {
       name: orm.enforce.notEmptyString("Name is required"),
       text: orm.enforce.notEmptyString("Text is required"),

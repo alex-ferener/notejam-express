@@ -88,7 +88,8 @@ router.post('/settings', function(req, res, next) {
       );
       return res.redirect('/settings');
     }
-    var hash = generateHash(req.param('password'));
+    // hash the new password
+    var hash = generateHash(req.param('new_password'));
     req.user.save({password: hash}, function(err) {
       req.flash(
         'success',

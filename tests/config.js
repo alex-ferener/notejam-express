@@ -1,4 +1,7 @@
-module.exports = {
+// Enable test environment
+process.env.NODE_ENV = 'test';
+
+const config = {
   host: 'http://localhost',
   port: 3000,
 
@@ -23,3 +26,8 @@ module.exports = {
     };
   }
 }
+
+const app = require('../app');
+app.listen(config.port);
+
+module.exports = config

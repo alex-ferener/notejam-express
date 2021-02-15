@@ -1,15 +1,9 @@
-// Enable test environment
-process.env.NODE_ENV = 'test';
-
 var request = require('superagent');
 var should = require('should');
 require('should-http');
 
 var db = require('../db');
 var config = require('./config');
-var app = require('../app');
-
-app.listen(3000);
 
 before(function(done) {
   db.createTables(function() {
@@ -100,7 +94,36 @@ describe('User', function(){
           done();
         });
     });
-
-    // @TODO implement "if passwords do not match" case
   });
+
+  describe('can change current password', function () {
+    it('if old password is valid', function (done) {
+      var agent = request.agent();
+      var signed = config.signInUser(
+        agent, {email: 'user1@example.com', password: 'password'}
+      );
+      signed(function () {
+        agent
+          .post(config.url('/settings'))
+          .send({password: 'password', new_password: 'new_password', confirm_new_password: 'new_password'})
+          .end(function (error, res) {
+            res.should.have.status(200);
+            res.text.should.containEql('Password is successfully changed');
+            done();
+          });
+      });
+    });
+
+    it('can successfully login in with the new password', function (done) {
+      var agent = request.agent();
+      agent
+        .post(config.url('/signin'))
+        .send({email: 'user1@example.com', password: 'new_password'})
+        .end(function (error, res) {
+          res.redirects.should.eql([config.url('/')]);
+          done();
+        });
+    });
+  });
+
 })

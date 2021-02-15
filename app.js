@@ -16,6 +16,18 @@ var pads = require('./routes/pads');
 var notes = require('./routes/notes');
 var settings = require('./settings')
 
+let sessionStore;
+
+if (process.env.REDIS_HOST !== undefined) {
+  const redis = require('redis')
+  const RedisStore = require('connect-redis')(session);
+  const redisClient = redis.createClient(6379, process.env.REDIS_HOST);
+  sessionStore = new RedisStore({ client: redisClient });
+} else {
+  const MemoryStore = session.MemoryStore;
+  sessionStore = new MemoryStore();
+}
+
 var app = express();
 
 
@@ -29,15 +41,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(expressValidator());
 app.use(cookieParser());
-app.use(session({cookie: { maxAge: 60000 }, secret: 'secret'}));
+app.use(session({cookie: { maxAge: 60000 }, secret: 'secret', store: sessionStore, resave: false}));
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
-
-// DB configuration
-var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database(settings.db);
 
 orm.settings.set("instance.returnAllErrors", true);
 app.use(orm.express(settings.dsn, {

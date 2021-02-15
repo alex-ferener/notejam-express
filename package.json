@@ -3,11 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "init-db": "node ./db.js",
+    "test": "./node_modules/mocha/bin/mocha tests"
   },
   "dependencies": {
     "express": "~4.2.0",
-    "sqlite3": "*",
     "static-favicon": "~1.0.0",
     "morgan": "~1.0.0",
     "cookie-parser": "~1.0.1",
@@ -20,15 +21,20 @@
     "express-validator": "~2.6.0",
     "passport": "0.2.1",
     "passport-local": "1.0.0",
-    "mocha": "1.*.*",
-    "supertest": "0.*.*",
-    "superagent": "*",
-    "should": "*",
-    "should-http": "*",
     "async": "*",
     "moment": "*",
     "bcrypt": "*",
     "nodemailer": "*",
-    "nodemailer-stub-transport": "*"
+    "nodemailer-stub-transport": "*",
+    "redis": "~3.0.2",
+    "mysql": "~2.18.1",
+    "connect-redis": "~5.1.0"
+  },
+  "devDependencies": {
+    "mocha": "2.*.*",
+    "supertest": "0.*.*",
+    "superagent": "*",
+    "should": "*",
+    "should-http": "*"
   }
 }
